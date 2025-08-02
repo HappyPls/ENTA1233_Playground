@@ -133,11 +133,11 @@ namespace Player
 
     private IEnumerator DelayedRaycastShot()
         {
+            DoRaycastShot();
+            PlayShootSound();
             isFiring = true;
             yield return new WaitForSeconds(fireDelay);
 
-            DoRaycastShot();
-            PlayShootSound();
 
             isFiring = false;
         }

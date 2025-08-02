@@ -14,6 +14,7 @@ public class LevelManager : MonoBehaviour
     private List<GameObject> currentAgents = new List<GameObject>();
     private GameObject currentLayoutInstance;
 
+    private HashSet<string> initializedScenes = new HashSet<string>();
     public static LevelManager Instance { get; private set; }
 
     private void Awake()
@@ -46,26 +47,27 @@ public class LevelManager : MonoBehaviour
     }
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Ensure we only spawn once per additive load
-        if (mode == LoadSceneMode.Additive)
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.SetActiveScene(scene);
+
+        if (!initializedScenes.Contains(scene.name))
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-            SceneManager.SetActiveScene(scene);
+            initializedScenes.Add(scene.name);
+            StartCoroutine(DelayedSpawn());
+
+            if (scene.name == "SimpleLevel")
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+
             if (SceneManager.GetSceneByName("MainMenu").isLoaded)
             {
                 SceneManager.UnloadSceneAsync("MainMenu");
             }
-
-            if (this.gameObject.activeInHierarchy)
-            {
-                StartCoroutine(DelayedSpawn());
-            }
-            else
-            {
-                Debug.LogWarning("LevelManager is inactive. Cannot start DelayedSpawn.");
-            }
         }
     }
+
 
     private IEnumerator DelayedSpawn()
     {
@@ -186,15 +188,51 @@ public class LevelManager : MonoBehaviour
     }
     public void ShowGameOverScene()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("GameOver", LoadSceneMode.Single);
+        Time.timeScale = 0f;
+
+        // Load GameOver scene additively
+        SceneManager.LoadScene("GameOver", LoadSceneMode.Additive);
+
+        // Unlock cursor for UI interaction
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
     public void OnRestartGame()
     {
-        LevelManager levelManager = FindObjectOfType<LevelManager>();
-        if (levelManager != null)
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        Time.timeScale = 1f;
+
+        StartCoroutine(RestartLevelCoroutine());
+    }
+
+    private IEnumerator RestartLevelCoroutine()
+    {
+        ClearState();
+
+        if (SceneManager.GetSceneByName("GameOver").isLoaded)
         {
-            levelManager.LoadLevelAdditively("SimpleLevel");
+            yield return SceneManager.UnloadSceneAsync("GameOver");
         }
+
+        if (SceneManager.GetSceneByName("SimpleLevel").isLoaded)
+        {
+            yield return SceneManager.UnloadSceneAsync("SimpleLevel");
+        }
+
+        // Clear initializedScenes AFTER unloading
+        initializedScenes.Remove("SimpleLevel");
+
+        yield return null;
+
+        LoadLevelAdditively("SimpleLevel");
+    }
+
+
+
+    public void HandlePlayerDeath()
+    {
+        ClearState(); // Destroys current player, agents, layout
+        ShowGameOverScene();
     }
 }

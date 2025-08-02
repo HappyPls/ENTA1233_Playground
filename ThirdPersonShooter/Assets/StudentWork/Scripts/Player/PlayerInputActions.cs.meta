@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: a01a2af49e010244cb6c80fe8b5c075d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 267961
+  packageName: 'Starter Assets: Character Controllers | URP'
+  packageVersion: 2.0.2
+  assetPath: Assets/Starter Assets/Runtime/InputSystem/StarterAssetsInputs.cs
+  uploadId: 721456

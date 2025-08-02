@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameOverHandler : MonoBehaviour
 {
@@ -23,6 +24,11 @@ public class GameOverHandler : MonoBehaviour
         {
             Time.timeScale = 1f;
             LevelManager.Instance.OnRestartGame();
+
+            if (SceneManager.GetSceneByName("GameOver").isLoaded)
+            {
+                SceneManager.UnloadSceneAsync("GameOver");
+            }
         }
         else
         {

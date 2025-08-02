@@ -20,6 +20,10 @@ public class AgentMoveScript : MonoBehaviour
 
     [SerializeField] private AIBulletManager BulletManager;
 
+    [Header("Footstep Settings")]
+    [SerializeField] private AudioClip[] FootstepAudioClips;
+    [SerializeField] private float FootstepAudioVolume = 1f;
+
     private int currentPatrolIndex = 0;
     private Transform Player;
     private float memoryTimer = 0f;
@@ -28,10 +32,12 @@ public class AgentMoveScript : MonoBehaviour
     private bool playerInSight;
     private float stuckTimer = 0f;
     private float maxStuckTime = 5f;
+    private Animator animator;
 
     private void Start()
     {
         AssignRandomPatrolPoints();
+        animator = GetComponentInChildren<Animator>();
     }
 
     void Update()
@@ -79,6 +85,13 @@ public class AgentMoveScript : MonoBehaviour
                 }
             }
         }
+
+        if (NavMeshAgent != null && animator != null)
+        {
+            float moveSpeed = NavMeshAgent.velocity.magnitude;
+            animator.SetFloat("Speed", moveSpeed);
+            Debug.Log("Animator Speed param: " + animator.GetFloat("Speed"));
+        }
     }
 
     private void PatrolToNextPoint()
@@ -117,7 +130,17 @@ public class AgentMoveScript : MonoBehaviour
         }
         return null;
     }
-
+    private void OnFootstep(AnimationEvent animationEvent)
+    {
+        if (animationEvent.animatorClipInfo.weight > 0.5f)
+        {
+            if (FootstepAudioClips.Length > 0)
+            {
+                var index = Random.Range(0, FootstepAudioClips.Length);
+                AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.position, FootstepAudioVolume);
+            }
+        }
+    }
     private void PlayerEngagement()
     {
         
@@ -137,7 +160,13 @@ public class AgentMoveScript : MonoBehaviour
                 NavMeshAgent.SetDestination(lastKnownPlayerPosition);
                 BulletManager.Disengage();
             }
+            if (animator != null)
+            {
+                animator.SetBool("IsSearching", false);
+                animator.SetBool("IsAttacking", false);
+            }
         }
+
         else
         {
             if (NavMeshAgent != null && NavMeshAgent.enabled && NavMeshAgent.isOnNavMesh)
@@ -157,10 +186,19 @@ public class AgentMoveScript : MonoBehaviour
             if (Player != null && playerInSight)
             {
                 BulletManager.EngageTarget(Player);
+
+                if (animator != null)
+                {
+                    animator.SetBool("IsAttacking", true);
+                }
             }
             else
             {
                 BulletManager.Disengage();
+                if (animator != null)
+                {
+                    animator.SetBool("IsAttacking", false);
+                }
             }
 
             if (memoryTimer <= 0f)
