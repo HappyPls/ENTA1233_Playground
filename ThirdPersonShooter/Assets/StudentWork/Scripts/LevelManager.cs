@@ -228,8 +228,31 @@ public class LevelManager : MonoBehaviour
         LoadLevelAdditively("SimpleLevel");
     }
 
+    public void OnMainMenu()
+    {
+        StartCoroutine(MainMenuCoroutine());
+    }
+    private IEnumerator MainMenuCoroutine()
+    {
+        ClearState();
 
+        if (SceneManager.GetSceneByName("GameOver").isLoaded)
+        {
+            yield return SceneManager.UnloadSceneAsync("GameOver");
+        }
 
+        if (SceneManager.GetSceneByName("SimpleLevel").isLoaded)
+        {
+            yield return SceneManager.UnloadSceneAsync("SimpleLevel");
+        }
+
+        // Clear initializedScenes AFTER unloading
+        initializedScenes.Remove("SimpleLevel");
+
+        yield return null;
+
+        LoadLevelAdditively("MainMenu");
+    }
     public void HandlePlayerDeath()
     {
         ClearState(); // Destroys current player, agents, layout
